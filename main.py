@@ -48,8 +48,8 @@ def gibbs_sample(my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T, s_sample
         b = math.inf
     for i in range(num_samples):
         #my_t = Sigma_T@np.array([[my_s1/var_s1 + t_sample[i-1]/var_t], [my_s2/var_s1 - t_sample[i-1]/var_t]])
-        my_t = update_my(t_sample[i], my_s1, var_s1, my_s2, var_s2, var_t, Sigma_T)
-        s_sample[i] = rng.multivariate_normal(my_t.T[0], Sigma_T)
+        my = update_my(t_sample[i-1], my_s1, var_s1, my_s2, var_s2, var_t, Sigma_T)
+        s_sample[i] = rng.multivariate_normal(my.T[0], Sigma_T)
         t_sample[i] = sp.stats.truncnorm.rvs(a, b, s_sample[i-1][0]-s_sample[i-1][1], sigma_t)
 
 gibbs_sample(my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T, s_sample, t_sample, 1, num_samples)
