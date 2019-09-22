@@ -36,11 +36,24 @@ my_t = Sigma_T@np.array([[my_s1/var_s1 + t_guess/var_t], [my_s2/var_s1 - t_guess
 s_sample[0] = rng.multivariate_normal(my_t.T[0], sigma_s)
 t_sample[0] = t_guess
 
-for i in range(num_samples):
-    my_t = Sigma_T@np.array([[my_s1/var_s1 + t_sample[i-1]/var_t], [my_s2/var_s1 - t_sample[i-1]/var_t]])
-    s_sample[i] = rng.multivariate_normal(my_t.T[0], Sigma_T)
-    t_sample[i] = sp.stats.truncnorm.rvs(0, math.inf, s_sample[i-1][0]-s_sample[i-1][1], sigma_t)
 
+def update_my(t, my_s1, var_s1, my_s2, var_s2, var_t, Sigma_T):
+    return Sigma_T@np.array([[my_s1/var_s1 + t/var_t], [my_s2/var_s1 - t/var_t]])
 
-plt.hist(s_sample, bins=50)
+def gibbs_sample(my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T, s_sample, t_sample, y, num_samples):
+    a = -math.inf
+    b = 0
+    if(y == 1):
+        a = 0
+        b = math.inf
+    for i in range(num_samples):
+        #my_t = Sigma_T@np.array([[my_s1/var_s1 + t_sample[i-1]/var_t], [my_s2/var_s1 - t_sample[i-1]/var_t]])
+        my_t = update_my(t_sample[i], my_s1, var_s1, my_s2, var_s2, var_t, Sigma_T)
+        s_sample[i] = rng.multivariate_normal(my_t.T[0], Sigma_T)
+        t_sample[i] = sp.stats.truncnorm.rvs(a, b, s_sample[i-1][0]-s_sample[i-1][1], sigma_t)
+
+gibbs_sample(my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T, s_sample, t_sample, 1, num_samples)
+
+plt.hist(s_sample, bins=50, label=['player 1', 'player 2'])
+plt.legend()
 plt.show()
