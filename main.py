@@ -4,6 +4,7 @@ import scipy.stats
 import matplotlib.pyplot as plt
 import numpy.random as rng
 import math
+import pandas as pd
 
 # Hyperparameters
 my_s1 = 25
@@ -21,7 +22,7 @@ sigma_s = [[var_s1, 0], [0, var_s2]]
 sigma_t = var_t
 
 # Samples
-num_samples = 100000
+num_samples = 10200
 s_sample = np.zeros((num_samples, 2))
 t_sample = np.zeros(num_samples)
 
@@ -34,6 +35,8 @@ Sigma_T = det_T*np.array([[1/var_s2 + 1/var_t, 1/var_t], [1/var_t, 1/var_s1 + 1/
 def update_my(t, my_s1, var_s1, my_s2, var_s2, var_t, Sigma_T):
     return Sigma_T@np.array([[my_s1/var_s1 + t/var_t], [my_s2/var_s1 - t/var_t]])
 
+# Gibbs Sampler function
+# s_sample and t_ sample are two/one dimentional vectors storing the values calculated 
 def gibbs_sample(t_guess, my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T, s_sample, t_sample, y, num_samples):
     my = update_my(t_guess, my_s1, var_s1, my_s2, var_s2, var_t, Sigma_T)
     s_sample[0] = rng.multivariate_normal(my.T[0], sigma_s)
@@ -49,7 +52,7 @@ def gibbs_sample(t_guess, my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T,
         s_sample[i] = rng.multivariate_normal(my.T[0], Sigma_T)
         t_sample[i] = sp.stats.truncnorm.rvs(a, b, s_sample[i-1][0]-s_sample[i-1][1], sigma_t)
 
-gibbs_sample(t_guess, my_s1, var_s1, my_s2, var_s2, var_t, sigma_t, Sigma_T, s_sample, t_sample, 1, num_samples)
+samples =[3200, 5200, 10200, 20200]
 
 # Trying to find burnin
 x = list()
@@ -57,5 +60,17 @@ for i in range(int(s_sample.__len__()/10)):
     mean = sp.stats.norm.mean(t_sample[range(i, i+100)])
     x.append(mean[0])
 
-plt.plot(x)
+# Burn in
+b_in = 200
+s1_spred = np.mean(s_sample[200:, 0])
+s1_vpred = np.std(s_sample[200:, 0])
+s2_spred = np.mean(s_sample[200:, 1])
+s2_vpred = np.std(s_sample[200:, 1])
+
+
+x = np.linspace(0, 60, 1000)
+plt.hist(s_sample[200:], bins=50, density=True)
+plt.plot(x, sp.stats.norm.pdf(x, s1_spred, s1_vpred))
+plt.plot(x, sp.stats.norm.pdf(x, s2_spred, s2_vpred))
 plt.show()
+
